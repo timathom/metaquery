@@ -21,6 +21,13 @@ declare
 function test:get-connect-params() {
   db:create("connect", doc("fixtures/mqy-params.xml"), "params")
 };
+
+(: Helper to connect to DB :)
+declare function test:connect-to-db() {
+  let $creds  := db:open("connect")/*
+  return
+    mqy:connect($creds/conn/uri, $creds/conn/user, $creds/conn/pw)
+};
   
 (:~ 
  : mqy:connect
@@ -28,12 +35,10 @@ function test:get-connect-params() {
  :)
 declare
   %unit:test
-function test:connect() {   
-  let $creds := db:open("connect")/*
-  return
-    unit:assert-equals(
-      mqy:connect($creds/conn/uri, $creds/conn/user, $creds/conn/pw), 0
-    )
+function test:connect() {     
+  unit:assert-equals(
+    test:connect-to-db(), 0
+  )
 };
 
 (:~ 
@@ -43,15 +48,14 @@ function test:connect() {
 declare
   %unit:test
 function test:simple-query-with-results() {
-  let $creds  := db:open("connect")/*,
-      $conn   := mqy:connect($creds/conn/uri, $creds/conn/user, $creds/conn/pw),
-      $params := 
-        <sql:parameters>
-          <sql:parameter type="string">245</sql:parameter>
-          <sql:parameter type="string">a</sql:parameter>
-        </sql:parameters>,
-      $sql    := 
-        test-queries:simple-query(())
+  let $conn := test:connect-to-db(),
+    $params := 
+      <sql:parameters>
+        <sql:parameter type="string">245</sql:parameter>
+        <sql:parameter type="string">a</sql:parameter>
+      </sql:parameters>,
+    $sql    := 
+      test-queries:simple-query(())
   return 
     unit:assert(
       mqy-sql:prepared($conn, $params, $sql)/sql:column
@@ -65,15 +69,14 @@ function test:simple-query-with-results() {
 declare
   %unit:test
 function test:simple-query-no-results() {
-   let $creds := db:open("connect")/*,
-      $conn   := mqy:connect($creds/conn/uri, $creds/conn/user, $creds/conn/pw),
-      $params := 
-        <sql:parameters>
-          <sql:parameter type="string">299</sql:parameter>
-          <sql:parameter type="string">a</sql:parameter>                                                         
-        </sql:parameters>,
-      $sql    := 
-        test-queries:simple-query(())
+  let $conn := test:connect-to-db(),
+    $params := 
+      <sql:parameters>
+        <sql:parameter type="string">299</sql:parameter>
+        <sql:parameter type="string">a</sql:parameter>                                                         
+      </sql:parameters>,
+    $sql    := 
+      test-queries:simple-query(())
   return 
     unit:assert(
       mqy-sql:prepared($conn, $params, $sql)[self::mqy-sql:message] 
@@ -87,14 +90,13 @@ function test:simple-query-no-results() {
 declare
   %unit:test("expected", "bxerr:BXSQ0003")
 function test:simple-query-with-error() {
-   let $creds := db:open("connect")/*,
-      $conn   := mqy:connect($creds/conn/uri, $creds/conn/user, $creds/conn/pw),
-      $params := 
-        <sql:parameters>
-          <sql:parameter type="string"></sql:parameter>       
-        </sql:parameters>,
-      $sql    := 
-        test-queries:simple-query(())
+  let $conn   := test:connect-to-db(),
+    $params := 
+      <sql:parameters>
+        <sql:parameter type="string"></sql:parameter>       
+      </sql:parameters>,
+    $sql    := 
+      test-queries:simple-query(())
   return 
     unit:assert(
       mqy-sql:prepared($conn, $params, $sql)
