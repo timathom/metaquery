@@ -39,13 +39,14 @@ declare function mqy-sql:prepared(
   $params as element(sql:parameters),
   $sql as xs:string
 ) as element()+ {    
-  let $query := sql:execute-prepared(sql:prepare($conn, $sql), $params)  
+  let $query   := sql:execute-prepared(sql:prepare($conn, $sql), $params),
+      $message := 
+        <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>
   return 
     if ($query) 
     then 
       if ($query/sql:column)
-      then $query
-      else
-        <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>
-    else () (: Something went wrong! :)      
+      then ($query, sql:close($conn))
+      else ($message, sql:close($conn)) => trace()        
+    else ($message, sql:close($conn))
 };
