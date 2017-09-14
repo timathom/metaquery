@@ -49,3 +49,8 @@ declare function mqy:connect(
   }  
 };
 
+declare function mqy:options-to-url(
+  $options as element(options)
+) as xs:string {
+  
+};

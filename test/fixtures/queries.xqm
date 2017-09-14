@@ -1,6 +1,6 @@
 xquery version "3.1";
 
-module namespace test-queries = "https://metadatafram.es/tests/queries/";
+module namespace test-queries = "https://metadatafram.es/test/queries/";
 declare namespace math = "http://www.w3.org/2005/xpath-functions/math";
 declare namespace sql = "http://basex.org/modules/sql";
 declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";

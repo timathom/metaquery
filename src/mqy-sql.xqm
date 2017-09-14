@@ -40,15 +40,21 @@ declare function mqy-sql:prepared(
 ) as element()+ {    
   let $query   := 
     try {
-      sql:execute-prepared(sql:prepare($conn, $sql), $params), sql:close($conn)
+      sql:execute-prepared(sql:prepare($conn, $sql), $params)
     } catch * {
-      <mqy-sql:error>{"Error [" || $err:code || "]: " || $err:description}</mqy-sql:error>
+      <mqy-sql:error>{
+        "Error [" || $err:code || "]: " || $err:description
+      }</mqy-sql:error>
     }
-  return 
+  return (
+    sql:close($conn),
     if ($query/sql:column) 
     then $query
     else 
       if ($query[self::mqy-sql:error]) 
       then $query
-      else <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>
+      else (
+        <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>        
+      )
+  )      
 };

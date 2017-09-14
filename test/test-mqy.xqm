@@ -1,6 +1,6 @@
 xquery version "3.1";
 
-module namespace test = "https://metadatafram.es/tests/";
+module namespace test = "https://metadatafram.es/test/";
 declare namespace math = "http://www.w3.org/2005/xpath-functions/math";
 declare namespace sql = "http://basex.org/modules/sql";
 declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
@@ -9,7 +9,7 @@ import module namespace mqy = "https://metadatafram.es/metaquery/mqy/"
   at "../src/mqy.xqm";
 import module namespace mqy-sql = "https://metadatafram.es/metaquery/sql/" at 
   "../src/mqy-sql.xqm";
-import module namespace test-queries = "https://metadatafram.es/tests/queries/" 
+import module namespace test-queries = "https://metadatafram.es/test/queries/" 
   at "fixtures/queries.xqm";
   
 (:~ 
@@ -19,10 +19,11 @@ declare
   %unit:before-module
   %updating
 function test:get-connect-params() {
-  db:create("connect", doc("fixtures/mqy-params.xml"), "params")
+  db:create("connect", doc("fixtures/mqy-params.xml"), "params"),
+  db:create("options", doc("fixtures/mqy-options.xml"), "options")
 };
 
-(: Helper to connect to DB :)
+(: Connect to DB :)
 declare function test:connect-to-db() {
   let $creds  := db:open("connect")/*
   return
@@ -90,7 +91,7 @@ function test:simple-query-no-results() {
 declare
   %unit:test("expected", "bxerr:BXSQ0003")
 function test:simple-query-with-error() {
-  let $conn   := test:connect-to-db(),
+  let $conn := test:connect-to-db(),
     $params := 
       <sql:parameters>
         <sql:parameter type="string"></sql:parameter>       
@@ -103,6 +104,27 @@ function test:simple-query-with-error() {
     )    
 };
 
+(:~ 
+ : mqy:options-to-url
+ : Convert options to SRU URL
+ :)
+declare
+  %unit:test
+function test:convert-options-to-url() {  
+  let $options := db:open("options"),
+      $url     := mqy:options-to-url($options)  
+  return (
+    unit:assert-equals(
+       $url/head, 
+       "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" ||
+       "searchRetrieve&amp;query=&quot;"
+    ),
+    unit:assert-equals(
+      $url/tail,
+      "&quot;&amp;startRecord=1&amp;maximumRecords=5&amp;recordSchema=marcxml"
+    )
+  )  
+};
 
 (:~ 
  : Remove test fixtures for the current test module
@@ -111,5 +133,6 @@ declare
   %unit:after-module
   %updating
 function test:clear-connect-params() {
-  db:drop("connect")
+  db:drop("connect"),
+  db:drop("options")
 };
