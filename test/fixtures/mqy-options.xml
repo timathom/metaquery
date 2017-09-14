@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options xmlns="https://metadatafram.es/metaquery/mqy/">
+  <base>https://metadatafram.es/metaproxy/</base>
+  <db>yul</db>
+  <op>searchRetrieve</op>  
+  <queries>
+    <query type="persName" index="bath.personalName"/>
+    <query type="title" index="dc.title"/>
+    <query type="isbn" index="local.isbn"></query>
+  </queries>
+  <start>1</start>
+  <max>10</max>
+  <schema>marcxml</schema>
+</options>
