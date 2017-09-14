@@ -41,14 +41,11 @@ declare function mqy:connect(
   $db-uri as xs:anyURI, 
   $db-user as xs:string, 
   $db-pw as xs:string
-) as xs:integer {
-  sql:connect($db-uri, $db-user, $db-pw)
+) as item() {
+  try {
+    sql:connect($db-uri, $db-user, $db-pw)  
+  } catch * {
+    <mqy:error>{"Error [" || $err:code || "]: " || $err:description}</mqy:error>
+  }  
 };
-
-
-
-
-
-
-
 

@@ -22,7 +22,6 @@ module namespace mqy-sql = "https://metadatafram.es/metaquery/sql/";
 declare namespace math = "http://www.w3.org/2005/xpath-functions/math";
 declare namespace sql = "http://basex.org/modules/sql";
 declare namespace err = "http://www.w3.org/2005/xqt-errors";
-declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
 
 (:~ 
  : 
@@ -35,18 +34,21 @@ declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
  :
  :)
 declare function mqy-sql:prepared(
-  $conn as xs:integer,
+  $conn as item(),
   $params as element(sql:parameters),
   $sql as xs:string
 ) as element()+ {    
-  let $query   := sql:execute-prepared(sql:prepare($conn, $sql), $params),
-      $message := 
-        <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>
+  let $query   := 
+    try {
+      sql:execute-prepared(sql:prepare($conn, $sql), $params), sql:close($conn)
+    } catch * {
+      <mqy-sql:error>{"Error [" || $err:code || "]: " || $err:description}</mqy-sql:error>
+    }
   return 
-    if ($query) 
-    then 
-      if ($query/sql:column)
-      then ($query, sql:close($conn))
-      else ($message, sql:close($conn)) => trace()        
-    else ($message, sql:close($conn))
+    if ($query/sql:column) 
+    then $query
+    else 
+      if ($query/mqy-sql:error) 
+      then $query
+      else <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>
 };

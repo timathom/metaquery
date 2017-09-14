@@ -104,8 +104,6 @@ function test:simple-query-with-error() {
 };
 
 
-
-
 (:~ 
  : Remove test fixtures for the current test module
  :)
