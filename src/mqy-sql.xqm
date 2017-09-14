@@ -48,7 +48,7 @@ declare function mqy-sql:prepared(
     if ($query/sql:column) 
     then $query
     else 
-      if ($query/mqy-sql:error) 
+      if ($query[self::mqy-sql:error]) 
       then $query
       else <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>
 };
