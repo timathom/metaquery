@@ -6,9 +6,9 @@
   <queries>
     <query type="persName" index="bath.personalName"/>
     <query type="title" index="dc.title"/>
-    <query type="isbn" index="local.isbn"></query>
+    <query type="isbn" index="local.isbn"/>
   </queries>
   <start>1</start>
-  <max>10</max>
+  <max>5</max>
   <schema>marcxml</schema>
 </options>

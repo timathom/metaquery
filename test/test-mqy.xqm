@@ -54,6 +54,9 @@ function test:simple-query-with-results() {
       <sql:parameters>
         <sql:parameter type="string">245</sql:parameter>
         <sql:parameter type="string">a</sql:parameter>
+        <sql:parameter type="string">245</sql:parameter>
+        <sql:parameter type="string">b</sql:parameter>      
+        <sql:parameter type="double">1</sql:parameter>  
       </sql:parameters>,
     $sql    := 
       test-queries:simple-query(())
@@ -75,6 +78,9 @@ function test:simple-query-no-results() {
       <sql:parameters>
         <sql:parameter type="string">299</sql:parameter>
         <sql:parameter type="string">a</sql:parameter>                                                         
+        <sql:parameter type="string">299</sql:parameter>
+        <sql:parameter type="string">b</sql:parameter>
+        <sql:parameter type="double">0</sql:parameter>
       </sql:parameters>,
     $sql    := 
       test-queries:simple-query(())
@@ -89,7 +95,7 @@ function test:simple-query-no-results() {
  : Query local catalog
  :)
 declare
-  %unit:test("expected", "bxerr:BXSQ0003")
+  %unit:test
 function test:simple-query-with-error() {
   let $conn := test:connect-to-db(),
     $params := 
@@ -100,7 +106,7 @@ function test:simple-query-with-error() {
       test-queries:simple-query(())
   return 
     unit:assert(
-      mqy-sql:prepared($conn, $params, $sql)
+      mqy-sql:prepared($conn, $params, $sql)[self::mqy-sql:error]
     )    
 };
 
@@ -111,20 +117,22 @@ function test:simple-query-with-error() {
 declare
   %unit:test
 function test:convert-options-to-url() {  
-  let $options := db:open("options"),
-      $url     := mqy:options-to-url($options)  
+  let $options := db:open("options")/mqy:options,
+      $sru     := mqy:options-to-url($options)
   return (
     unit:assert-equals(
-       $url/head, 
-       "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" ||
-       "searchRetrieve&amp;query=&quot;"
+      $sru/mqy:head/string(),
+      "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" ||
+      "searchRetrieve&amp;query="
     ),
     unit:assert-equals(
-      $url/tail,
-      "&quot;&amp;startRecord=1&amp;maximumRecords=5&amp;recordSchema=marcxml"
+      $sru/mqy:tail/string(),
+      "&amp;startRecord=1&amp;maximumRecords=5&amp;recordSchema=marcxml"
     )
   )  
 };
+
+
 
 (:~ 
  : Remove test fixtures for the current test module

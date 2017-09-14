@@ -56,5 +56,5 @@ declare function mqy-sql:prepared(
       else (
         <mqy-sql:message>No results for the query: {$sql}</mqy-sql:message>        
       )
-  )      
+  ) => trace()      
 };

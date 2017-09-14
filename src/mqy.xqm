@@ -50,7 +50,20 @@ declare function mqy:connect(
 };
 
 declare function mqy:options-to-url(
-  $options as element(options)
-) as xs:string {
-  
+  $ops as element(mqy:options)
+) as element(mqy:sru) {
+  <sru xmlns="https://metadatafram.es/metaquery/mqy/">
+    <head>
+    {
+      $ops/base || $ops/db || "?version=1.1&amp;operation=" || $ops/op || 
+      "&amp;query="
+    }
+    </head>
+    <tail>
+    {
+      "&amp;startRecord=" || $ops/start || "&amp;maximumRecords=" ||
+      $ops/max || "&amp;recordSchema=" || $ops/schema
+    }
+    </tail>
+  </sru>
 };

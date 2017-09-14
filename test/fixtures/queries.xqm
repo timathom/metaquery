@@ -6,13 +6,15 @@ declare namespace sql = "http://basex.org/modules/sql";
 declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
 declare namespace mqy-sql = "https://metadatafram.es/metaquery/sql/";
 
-
 declare function test-queries:simple-query(
   $aliases as element(mqy-sql:aliases)?
 ) as xs:string {
   ``[
-  SELECT Rawtohex(yaledb.Getbibsubfield(bib_text.bib_id, ?, ?))
+  SELECT bib_text.isbn, 
+         Rawtohex(bib_text.author) as author,
+         Rawtohex(yaledb.Getbibsubfield(bib_text.bib_id, ?, ?)) as main_title,
+         Rawtohex(yaledb.Getbibsubfield(bib_text.bib_id, ?, ?)) as subtitle
   FROM   bib_text
-  WHERE  ROWNUM = 1
+  WHERE  ROWNUM = ?
   ]``
 };
