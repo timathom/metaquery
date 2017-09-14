@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mappings xmlns="https://metadatafram.es/metaquery/mqy/">
+  <mapping>
+    <source>ISBN</source>
+    <index>local.isbn</index>
+  </mapping>
+  <mapping>
+    <source>LastName FirstName</source>
+    <index>bath.personalName</index>
+  </mapping>
+  <mapping>
+    <source>LastName2 FirstName2</source>
+    <index>bath.personalName</index>
+  </mapping>
+  <mapping>
+    <source>Title</source>
+    <index>dc.title</index>
+  </mapping>
+  <mapping>
+    <source>Publisher</source>
+    <index>dc.publisher</index>
+  </mapping>  
+</mappings>
