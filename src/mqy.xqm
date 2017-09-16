@@ -42,10 +42,20 @@ declare function mqy:connect(
   $db-user as xs:string, 
   $db-pw as xs:string
 ) as item() {
-  try {
+  try 
+  {
     sql:connect($db-uri, $db-user, $db-pw)  
-  } catch * {
-    <mqy:error>{"Error [" || $err:code || "]: " || $err:description}</mqy:error>
+  } 
+  catch * 
+  {
+    <mqy:error>
+    {
+      "Error [" 
+      || $err:code 
+      || "]: " 
+      || $err:description
+    }
+    </mqy:error>
   }  
 };
 
@@ -55,14 +65,21 @@ declare function mqy:options-to-url(
   <sru xmlns="https://metadatafram.es/metaquery/mqy/">
     <head>
     {
-      $ops/base || $ops/db || "?version=1.1&amp;operation=" || $ops/op || 
-      "&amp;query="
+      $ops/base 
+      || $ops/db 
+      || "?version=1.1&amp;operation=" 
+      || $ops/op 
+      || "&amp;query="
     }
     </head>
     <tail>
     {
-      "&amp;startRecord=" || $ops/start || "&amp;maximumRecords=" ||
-      $ops/max || "&amp;recordSchema=" || $ops/schema
+      "&amp;startRecord=" 
+      || $ops/start 
+      || "&amp;maximumRecords=" 
+      || $ops/max 
+      || "&amp;recordSchema=" 
+      || $ops/schema
     }
     </tail>
   </sru>
@@ -83,9 +100,11 @@ declare function mqy:map-query(
     for $r in $data/record
     return
       copy $m := $mappings
-      modify (
+      modify 
+      (
         for $d in $m/mqy:mapping/mqy:data/*        
-        return (
+        return 
+        (
           delete node $d[$r/*[name(.) = name($d)]
                         [. ! count(.//.) eq 1]]/../..,
           replace value of node $d with $r/*[name(.) = name($d)]          
@@ -107,15 +126,21 @@ declare function mqy:build-query(
       {
         for $s in $m/mqy:mapping
         return
-          <mqy:string>
+          <mqy:string index="{$s/mqy:index}">
           {
             let $i := $s/mqy:index,
                 $d := $s/mqy:data
-            return (
+            return 
+            (
               (
                 if ($i/@bool ne "NONE")
-                then " " || $i/@bool || " " || $i || "="
-                else $i || "="
+                then " " 
+                  || $i/@bool 
+                  || " " 
+                  || $i 
+                  || "="
+                else $i 
+                  || "="
               ),
               (
                 if (count($d/*) gt 1)
@@ -125,12 +150,22 @@ declare function mqy:build-query(
                   then mqy:clean-isbn($d/*)
                   else $d/*
               )
-            ) => string-join()
+            ) 
+            => string-join()
           }
           </mqy:string>        
       }
       </mqy:query>  
   }
   </mqy:queries> => trace()
+};
+
+declare function mqy:compile-query-string(
+  $sru as element(mqy:sru),  
+  $query as element(mqy:queries)
+) as xs:string {
+  $sru/mqy:head 
+  || $query/mqy:query[1]/mqy:string[1] 
+  || $sru/mqy:tail
 };
 

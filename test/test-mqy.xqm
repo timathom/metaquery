@@ -59,6 +59,7 @@ declare function test:connect-to-db() {
  :)
 declare
   %unit:test
+  %unit:ignore
 function test:connect() {     
   unit:assert-equals(
     test:connect-to-db(), 0
@@ -71,6 +72,7 @@ function test:connect() {
  :)
 declare
   %unit:test
+  %unit:ignore
 function test:simple-query-with-results() {
   let $conn := test:connect-to-db(),
     $params := 
@@ -95,6 +97,7 @@ function test:simple-query-with-results() {
  :)
 declare
   %unit:test
+  %unit:ignore
 function test:simple-query-no-results() {
   let $conn := test:connect-to-db(),
     $params := 
@@ -119,6 +122,7 @@ function test:simple-query-no-results() {
  :)
 declare
   %unit:test
+  %unit:ignore
 function test:simple-query-with-error() {
   let $conn := test:connect-to-db(),
     $params := 
@@ -145,8 +149,8 @@ function test:convert-options-to-url() {
   return (
     unit:assert-equals(
       $sru/mqy:head/string(),
-      "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" ||
-      "searchRetrieve&amp;query="
+      "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" 
+      || "searchRetrieve&amp;query="
     ),
     unit:assert-equals(
       $sru/mqy:tail/string(),
@@ -171,8 +175,15 @@ function test:clean-isbn() {
 };
 
 (:~ 
+ : Helper for queries
+ :)
+declare function test:get-data-for-queries() {
+  
+};
+
+(:~ 
  : mqy:map-query
- : Map data value to template
+ : Map data values to template
  :)
 declare
   %unit:test
@@ -195,7 +206,7 @@ function test:map-query() {
  :)
 declare
   %unit:test
-function test:build-query() {
+function test:build-query() {  
   let $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
       $mapped   := mqy:map-query($mappings, $data)[1]
@@ -204,7 +215,32 @@ function test:build-query() {
       mqy:build-query($mapped)/mqy:query[1]/mqy:string[1] 
         = "local.isbn=9789881896612"
     )
-  
+};
+
+(:~ 
+ : mqy:compile-query-string
+ : Compile query strings
+ :)
+declare
+  %unit:test
+function test:compile-query-string() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data)[1]
+  return
+  (
+    unit:assert-equals
+    (
+      mqy:compile-query-string($sru, mqy:build-query($mapped)),            
+      "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" 
+      || "searchRetrieve&amp;query="
+      || "local.isbn=9789881896612"
+      || "&amp;startRecord=1&amp;maximumRecords="
+      || "5&amp;recordSchema=marcxml"
+    )
+  )
 };
 
 (:~ 
