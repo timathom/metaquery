@@ -3,11 +3,6 @@
   <base>https://metadatafram.es/metaproxy/</base>
   <db>yul</db>
   <op>searchRetrieve</op>  
-  <queries>
-    <query type="persName" index="bath.personalName"/>
-    <query type="title" index="dc.title"/>
-    <query type="isbn" index="local.isbn"/>
-  </queries>
   <start>1</start>
   <max>5</max>
   <schema>marcxml</schema>

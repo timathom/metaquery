@@ -1,23 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mappings xmlns="https://metadatafram.es/metaquery/mqy/">
   <mapping>
-    <source>ISBN</source>
-    <index>local.isbn</index>
+    <data>
+      <ISBN xmlns=""/>
+    </data>        
+    <index bool="NONE">local.isbn</index>
   </mapping>
   <mapping>
-    <source>LastName FirstName</source>
-    <index>bath.personalName</index>
+    <data>
+      <LastName xmlns=""/>
+      <FirstName xmlns=""/>  
+    </data>       
+    <index bool="NONE">bath.personalName</index>
   </mapping>
   <mapping>
-    <source>LastName2 FirstName2</source>
-    <index>bath.personalName</index>
+    <data>
+      <LastName2 xmlns=""/>
+      <FirstName2 xmlns=""/>
+    </data>
+    <index bool="OR">bath.personalName</index>
   </mapping>
   <mapping>
-    <source>Title</source>
-    <index>dc.title</index>
+    <data>
+      <Title xmlns=""/>
+    </data>            
+    <index bool="AND">dc.title</index>
   </mapping>
-  <mapping>
-    <source>Publisher</source>
-    <index>dc.publisher</index>
+  <mapping>    
+    <data>
+      <Publisher xmlns=""/>  
+    </data>        
+    <index bool="OR">dc.publisher</index>
   </mapping>  
 </mappings>

@@ -20,7 +20,30 @@ declare
   %updating
 function test:get-connect-params() {
   db:create("connect", doc("fixtures/mqy-params.xml"), "params"),
-  db:create("options", doc("fixtures/mqy-options.xml"), "options")
+  db:create("options", doc("fixtures/mqy-options.xml"), "options"),
+  db:create("mappings", doc("fixtures/mqy-mappings.xml"), "mappings"),
+  db:create("data",
+    <csv>
+      <record>
+        <ISBN>978-988189661-2</ISBN>
+        <FirstName>Ruben</FirstName>
+        <FirstName2>Wassink</FirstName2>
+        <LastName>Lundgren</LastName>
+        <LastName2>Lundgren</LastName2>
+        <Title>The Sochi Project</Title>
+        <Publisher>Badger &amp; Press</Publisher>
+      </record>
+      <record>
+        <ISBN>978-123456789-2</ISBN>
+        <FirstName>Abc</FirstName>
+        <FirstName2>Defg</FirstName2>
+        <LastName>Hijkl</LastName>
+        <LastName2>Mnopqrs</LastName2>
+        <Title>Tuv</Title>
+        <Publisher></Publisher>
+      </record>
+    </csv>,  
+  "data")
 };
 
 (: Connect to DB :)
@@ -132,7 +155,57 @@ function test:convert-options-to-url() {
   )  
 };
 
+(:~ 
+ : mqy:clean-isbn
+ : Ensure ISBNs are searchable
+ :)
+declare
+  %unit:test
+function test:clean-isbn() {
+  let $isbn  := "ISBN 0-942159-11-X",
+      $isbn2 := "094215911x"
+  return (
+    unit:assert-equals(mqy:clean-isbn($isbn), "094215911X"),
+    unit:assert-equals(mqy:clean-isbn($isbn2), "094215911x")
+  )
+};
 
+(:~ 
+ : mqy:map-query
+ : Map data value to template
+ :)
+declare
+  %unit:test
+function test:map-query() {
+  let $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*
+  return (
+    unit:assert(
+      mqy:map-query($mappings, $data)[1]/*/mqy:mapping/mqy:data[FirstName ne ""]
+    ),
+    unit:assert(
+      not(mqy:map-query($mappings, $data)[2]/*/mqy:mapping/mqy:data[Publisher])  
+    )
+  )
+};
+
+(:~ 
+ : mqy:build-query
+ : Build SRU query string from template
+ :)
+declare
+  %unit:test
+function test:build-query() {
+  let $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data)[1]
+  return
+    unit:assert(
+      mqy:build-query($mapped)/mqy:query[1]/mqy:string[1] 
+        = "local.isbn=9789881896612"
+    )
+  
+};
 
 (:~ 
  : Remove test fixtures for the current test module
@@ -142,5 +215,7 @@ declare
   %updating
 function test:clear-connect-params() {
   db:drop("connect"),
-  db:drop("options")
+  db:drop("options"),
+  db:drop("mappings"),
+  db:drop("data")
 };

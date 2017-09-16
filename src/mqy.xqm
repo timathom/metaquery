@@ -67,3 +67,70 @@ declare function mqy:options-to-url(
     </tail>
   </sru>
 };
+
+declare function mqy:clean-isbn(
+  $isbn as xs:string?
+) as xs:string? {
+  replace($isbn, "[^\d|X|x]", "")  
+};
+
+declare function mqy:map-query(
+  $mappings as element(mqy:mappings),
+  $data as item()
+) as element(mqy:mapped) {
+  <mqy:mapped>
+  {      
+    for $r in $data/record
+    return
+      copy $m := $mappings
+      modify (
+        for $d in $m/mqy:mapping/mqy:data/*        
+        return (
+          delete node $d[$r/*[name(.) = name($d)]
+                        [. ! count(.//.) eq 1]]/../..,
+          replace value of node $d with $r/*[name(.) = name($d)]          
+        )          
+      )
+      return $m
+  }
+  </mqy:mapped>
+};
+
+declare function mqy:build-query(
+  $mapped as element(mqy:mapped)
+) as element(mqy:queries) {
+  <mqy:queries>
+  {
+    for $m at $p in $mapped/*
+    return
+      <mqy:query>
+      {
+        for $s in $m/mqy:mapping
+        return
+          <mqy:string>
+          {
+            let $i := $s/mqy:index,
+                $d := $s/mqy:data
+            return (
+              (
+                if ($i/@bool ne "NONE")
+                then " " || $i/@bool || " " || $i || "="
+                else $i || "="
+              ),
+              (
+                if (count($d/*) gt 1)
+                then string-join($d/*, " ")
+                else 
+                  if ($i eq "local.isbn")
+                  then mqy:clean-isbn($d/*)
+                  else $d/*
+              )
+            ) => string-join()
+          }
+          </mqy:string>        
+      }
+      </mqy:query>  
+  }
+  </mqy:queries> => trace()
+};
+
