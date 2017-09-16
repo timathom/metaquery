@@ -144,11 +144,12 @@ declare function mqy:build-query(
               ),
               (
                 if (count($d/*) gt 1)
-                then string-join($d/*, " ")
+                then string-join($d/*, " ") 
+                     => encode-for-uri()
                 else 
                   if ($i eq "local.isbn")
                   then mqy:clean-isbn($d/*)
-                  else $d/*
+                  else encode-for-uri($d/*)
               )
             ) 
             => string-join()
@@ -162,10 +163,10 @@ declare function mqy:build-query(
 
 declare function mqy:compile-query-string(
   $sru as element(mqy:sru),  
-  $query as element(mqy:queries)
+  $query as element(mqy:string)
 ) as xs:string {
   $sru/mqy:head 
-  || $query/mqy:query[1]/mqy:string[1] 
+  || $query
   || $sru/mqy:tail
 };
 

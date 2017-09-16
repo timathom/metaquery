@@ -233,7 +233,10 @@ function test:compile-query-string() {
   (
     unit:assert-equals
     (
-      mqy:compile-query-string($sru, mqy:build-query($mapped)),            
+      mqy:compile-query-string(
+        $sru, 
+        mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
+      ),            
       "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
       || "local.isbn=9789881896612"
