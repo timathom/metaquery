@@ -26,10 +26,10 @@ function test:get-connect-params() {
     <csv>
       <record>
         <ISBN>978-988189661-2</ISBN>
-        <FirstName>Ruben</FirstName>
-        <FirstName2>Wassink</FirstName2>
-        <LastName>Lundgren</LastName>
-        <LastName2>Lundgren</LastName2>
+        <FirstName>Rob</FirstName>
+        <FirstName2>Arnold</FirstName2>
+        <LastName>Hornstra</LastName>
+        <LastName2>Van Bruggen</LastName2>
         <Title>The Sochi Project</Title>
         <Publisher>Badger &amp; Press</Publisher>
       </record>
@@ -249,6 +249,27 @@ function test:compile-query-string() {
       || "5&amp;recordSchema=marcxml"
     )
   )
+};
+
+(:~ 
+ : mqy:run-queries
+ : Run the queries in order of preference and respond to results
+ :)
+declare
+  %unit:test
+function test:run-queries() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data)[1]
+  return
+    unit:assert(
+      mqy:run-queries(
+        $sru,
+        mqy:build-query($mapped) 
+      )
+    )
 };
 
 (:~ 

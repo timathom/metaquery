@@ -9,14 +9,14 @@
   <mapping>
     <data>
       <LastName xmlns=""/>
-      <FirstName xmlns=""/>  
+      <!-- <FirstName xmlns=""/> -->
     </data>       
     <index bool="NONE">bath.personalName</index>
   </mapping>
   <mapping>
     <data>
       <LastName2 xmlns=""/>
-      <FirstName2 xmlns=""/>
+      <!-- <FirstName2 xmlns=""/> -->
     </data>
     <index bool="OR">bath.personalName</index>
   </mapping>

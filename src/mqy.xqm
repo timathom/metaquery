@@ -133,20 +133,24 @@ declare function mqy:build-query(
                 $d := $s/mqy:data
             return 
             (           
-              if ($b ne "NONE")
+              if ($b eq "AND")
               then 
-                (" " || $b || " " )
+                (") " || $b || " (" )
                 => encode-for-uri()  
-              else (),                 
+              else 
+                if ($b ne "NONE")
+                then (" " || $b || " ")
+                else (),                 
               $i || "=",              
               if (count($d/*) gt 1)
               then 
-                string-join($d/*, " ") 
-                => encode-for-uri()                              
+                "&quot;" || encode-for-uri(
+                  lower-case(string-join($d/*, " "))
+                ) || "&quot;"
               else 
                 if ($i eq "local.isbn")
                 then mqy:clean-isbn($d/*)
-                else encode-for-uri($d/*)
+                else "&quot;" || encode-for-uri(lower-case($d/*)) || "&quot;"
             ) 
             => string-join()
           }
@@ -154,13 +158,67 @@ declare function mqy:build-query(
       }
       </mqy:query>  
   }
-  </mqy:queries> => trace()
+  </mqy:queries>
 };
 
 declare function mqy:compile-query-string(
   $sru as element(mqy:sru),  
   $query as element(mqy:string)
 ) as xs:string {
-  $sru/mqy:head || $query || $sru/mqy:tail
+  $sru/mqy:head || "(" || $query || ")" || $sru/mqy:tail
 };
 
+declare function mqy:run-queries(  
+  $sru as element(mqy:sru),
+  $queries as element(mqy:queries)
+) as element()* {
+  for $query in $queries/mqy:query
+  let $isbn :=
+    if ($query/mqy:string[@index eq "local.isbn"])
+    then mqy:send-query(mqy:compile-query-string($sru, $query/mqy:string))
+    else ()
+  return
+    if (not($isbn//*:record))
+    then mqy:send-query(      
+      mqy:compile-query-string(
+        $sru, 
+        <mqy:string>{
+          string-join(
+            for $s in $query/mqy:string[not(@index eq "local.isbn")] return $s
+          )        
+        }</mqy:string>        
+      )
+    ) 
+    else
+      <mqy-sql:message>No results for the query: {
+        string($query/mqy:string[not(@index eq "local.isbn")])
+      }</mqy-sql:message>
+};
+
+
+(:~ 
+ : Helper for submitting query
+ :)
+declare function mqy:send-query(
+  $href as xs:string
+) as element()* {
+  try 
+  {
+    http:send-request(
+      <http:request 
+        method="get" 
+        href="{$href}"/> 
+    ) => trace()
+  }
+  catch *
+  {
+    <mqy:error>
+    {
+      "Error [" 
+      || $err:code 
+      || "]: " 
+      || $err:description
+    }
+    </mqy:error>
+  }
+};
