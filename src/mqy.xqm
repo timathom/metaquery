@@ -129,28 +129,24 @@ declare function mqy:build-query(
           <mqy:string index="{$s/mqy:index}">
           {
             let $i := $s/mqy:index,
+                $b := $i/@bool,
                 $d := $s/mqy:data
             return 
-            (
-              (
-                if ($i/@bool ne "NONE")
-                then " " 
-                  || $i/@bool 
-                  || " " 
-                  || $i 
-                  || "="
-                else $i 
-                  || "="
-              ),
-              (
-                if (count($d/*) gt 1)
-                then string-join($d/*, " ") 
-                     => encode-for-uri()
-                else 
-                  if ($i eq "local.isbn")
-                  then mqy:clean-isbn($d/*)
-                  else encode-for-uri($d/*)
-              )
+            (           
+              if ($b ne "NONE")
+              then 
+                (" " || $b || " " )
+                => encode-for-uri()  
+              else (),                 
+              $i || "=",              
+              if (count($d/*) gt 1)
+              then 
+                string-join($d/*, " ") 
+                => encode-for-uri()                              
+              else 
+                if ($i eq "local.isbn")
+                then mqy:clean-isbn($d/*)
+                else encode-for-uri($d/*)
             ) 
             => string-join()
           }
@@ -165,8 +161,6 @@ declare function mqy:compile-query-string(
   $sru as element(mqy:sru),  
   $query as element(mqy:string)
 ) as xs:string {
-  $sru/mqy:head 
-  || $query
-  || $sru/mqy:tail
+  $sru/mqy:head || $query || $sru/mqy:tail
 };
 

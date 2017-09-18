@@ -210,11 +210,16 @@ function test:build-query() {
   let $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
       $mapped   := mqy:map-query($mappings, $data)[1]
-  return
+  return (
     unit:assert(
       mqy:build-query($mapped)/mqy:query[1]/mqy:string[1] 
         = "local.isbn=9789881896612"
+    ),
+    unit:assert(
+      mqy:build-query($mapped)/mqy:query[1]/mqy:string[3] 
+        = "%20OR%20bath.personalName=Lundgren%20Wassink"
     )
+  )
 };
 
 (:~ 
