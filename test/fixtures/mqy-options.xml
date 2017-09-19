@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options xmlns="https://metadatafram.es/metaquery/mqy/">
   <base>https://metadatafram.es/metaproxy/</base>
-  <db>yul</db>
+  <db>oclcbib</db>
   <op>searchRetrieve</op>  
   <start>1</start>
   <max>5</max>

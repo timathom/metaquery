@@ -192,7 +192,7 @@ function test:map-query() {
       $data     := db:open("data")/*
   return (
     unit:assert(
-      mqy:map-query($mappings, $data)[1]/*/mqy:mapping/mqy:data[FirstName ne ""]
+      mqy:map-query($mappings, $data)/*/mqy:mapping/mqy:data[LastName ne ""]
     ),
     unit:assert(
       not(mqy:map-query($mappings, $data)[2]/*/mqy:mapping/mqy:data[Publisher])  
@@ -212,12 +212,12 @@ function test:build-query() {
       $mapped   := mqy:map-query($mappings, $data)[1]
   return (
     unit:assert(
-      mqy:build-query($mapped)/mqy:query[1]/mqy:string[1] 
+      mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
         = "local.isbn=9789881896612"
     ),
     unit:assert(
-      mqy:build-query($mapped)/mqy:query[1]/mqy:string[3] 
-        = "%20OR%20bath.personalName=Lundgren%20Wassink"
+      mqy:build-query($mapped)/mqy:query[1]/mqy:string[3]
+        = " OR bath.personalName=&quot;van%20bruggen&quot;"
     )
   )
 };
@@ -244,7 +244,7 @@ function test:compile-query-string() {
       ),            
       "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
-      || "local.isbn=9789881896612"
+      || "(local.isbn=9789881896612)"
       || "&amp;startRecord=1&amp;maximumRecords="
       || "5&amp;recordSchema=marcxml"
     )
@@ -262,13 +262,15 @@ function test:run-queries() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data)[1]
+      $mapped   := mqy:map-query($mappings, $data)
   return
-    unit:assert(
-      mqy:run-queries(
-        $sru,
-        mqy:build-query($mapped) 
-      )
+    count(
+      unit:assert(
+        mqy:run-queries(
+          $sru,
+          mqy:build-query($mapped)
+        )//mqy:response
+      ) eq 2
     )
 };
 
