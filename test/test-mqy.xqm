@@ -59,7 +59,7 @@ declare function test:connect-to-db() {
  :)
 declare
   %unit:test
-  
+  %unit:ignore
 function test:connect() {     
   unit:assert-equals(
     test:connect-to-db(), 0
@@ -72,7 +72,7 @@ function test:connect() {
  :)
 declare
   %unit:test
-  
+  %unit:ignore
 function test:simple-query-with-results() {
   let $conn := test:connect-to-db(),
     $params := 
