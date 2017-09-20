@@ -59,7 +59,7 @@ declare function test:connect-to-db() {
  :)
 declare
   %unit:test
-  %unit:ignore
+  
 function test:connect() {     
   unit:assert-equals(
     test:connect-to-db(), 0
@@ -72,7 +72,7 @@ function test:connect() {
  :)
 declare
   %unit:test
-  %unit:ignore
+  
 function test:simple-query-with-results() {
   let $conn := test:connect-to-db(),
     $params := 
@@ -149,7 +149,7 @@ function test:convert-options-to-url() {
   return (
     unit:assert-equals(
       $sru/mqy:head/string(),
-      "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" 
+      "https://metadatafram.es/metaproxy/oclcbib?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
     ),
     unit:assert-equals(
@@ -242,7 +242,7 @@ function test:compile-query-string() {
         $sru, 
         mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
       ),            
-      "https://metadatafram.es/metaproxy/yul?version=1.1&amp;operation=" 
+      "https://metadatafram.es/metaproxy/oclcbib?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
       || "(local.isbn=9789881896612)"
       || "&amp;startRecord=1&amp;maximumRecords="
@@ -263,13 +263,13 @@ function test:run-queries() {
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
       $mapped   := mqy:map-query($mappings, $data)
-  return
-    count(
-      unit:assert(
+  return    
+    unit:assert(
+      count(
         mqy:run-queries(
           $sru,
           mqy:build-query($mapped)
-        )//mqy:response
+        )//mqy:response => trace()
       ) eq 2
     )
 };
