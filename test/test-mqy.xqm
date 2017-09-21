@@ -25,7 +25,7 @@ function test:get-connect-params() {
   db:create("data",
     <csv>
       <record>
-        <ISBN>978-988189661-2</ISBN>
+        <ISBN>978-159711244-4</ISBN>
         <FirstName>Rob</FirstName>
         <FirstName2>Arnold</FirstName2>
         <LastName>Hornstra</LastName>
@@ -35,15 +35,19 @@ function test:get-connect-params() {
       </record>
       <record>
         <ISBN>978-123456789-2</ISBN>
-        <FirstName>Abc</FirstName>
-        <FirstName2>Defg</FirstName2>
-        <LastName>Hijkl</LastName>
-        <LastName2>Mnopqrs</LastName2>
-        <Title>Tuv</Title>
+        <FirstName>Abadfasdfsadfc</FirstName>
+        <FirstName2>Deadsfsadfasdffg</FirstName2>
+        <LastName>Hijkasdfasdfasdfl</LastName>
+        <LastName2>Mnopqrasdfasdfasdfs</LastName2>
+        <Title>Tasdfasdfasdfasdfasdfuv</Title>
         <Publisher></Publisher>
       </record>
     </csv>,  
-  "data")
+  "data"),
+  db:create("records", doc("fixtures/mqy-records.xml"), "records"),
+  db:create("marc21"),
+  file:create-dir("/Users/tt434/Desktop/marcxml/"),
+  file:create-dir("/Users/tt434/Desktop/marc21/")
 };
 
 (: Connect to DB :)
@@ -154,7 +158,7 @@ function test:convert-options-to-url() {
     ),
     unit:assert-equals(
       $sru/mqy:tail/string(),
-      "&amp;startRecord=1&amp;maximumRecords=5&amp;recordSchema=marcxml"
+      "&amp;startRecord=1&amp;maximumRecords=25&amp;recordSchema=marcxml"
     )
   )  
 };
@@ -213,11 +217,11 @@ function test:build-query() {
   return (
     unit:assert(
       mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
-        = "local.isbn=9789881896612"
+        = "local.isbn=9781597112444"
     ),
     unit:assert(
       mqy:build-query($mapped)/mqy:query[1]/mqy:string[3]
-        = " OR bath.personalName=&quot;van%20bruggen&quot;"
+        = " OR bath.any=&quot;van%20bruggen&quot;"
     )
   )
 };
@@ -244,9 +248,9 @@ function test:compile-query-string() {
       ),            
       "https://metadatafram.es/metaproxy/oclcbib?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
-      || "(local.isbn=9789881896612)"
+      || "(local.isbn=9781597112444)"
       || "&amp;startRecord=1&amp;maximumRecords="
-      || "5&amp;recordSchema=marcxml"
+      || "25&amp;recordSchema=marcxml"
     )
   )
 };
@@ -264,15 +268,211 @@ function test:run-queries() {
       $data     := db:open("data")/*,
       $mapped   := mqy:map-query($mappings, $data)
   return    
-    unit:assert(
+    unit:assert-equals(
       count(
         mqy:run-queries(
           $sru,
           mqy:build-query($mapped)
-        )//mqy:response => trace()
-      ) eq 2
+        )//mqy:response 
+      ), 2 
     )
 };
+
+(:~ 
+ : mqy:run-queries
+ : Run queries in stages (ISBN, name-title-publisher, title-publisher, title)
+ :)
+declare
+  %unit:test
+function test:run-progressive-queries() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data)
+  return (
+    unit:assert-equals(
+      mqy:run-queries(
+        $sru,
+          mqy:build-query($mapped)
+        )//mqy:response[1]//*:query/string(), "(local.isbn=9781597112444)"        
+      ),
+    unit:assert(
+      mqy:run-queries(
+        $sru,
+          mqy:build-query($mapped)
+        )//mqy:response[2]//*:numberOfRecords ! . = 0
+      )
+    )  
+};
+
+(:~ 
+ : mqy:filter-results
+ : Filter records based on quality parameters
+ :)
+declare
+  %unit:test
+function test:filter-results() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data),
+      $records  := db:open("records")/*
+  return (
+    unit:assert(
+      (mqy:run-queries(
+        $sru,
+        mqy:build-query($mapped)
+      )//mqy:response[1]//*:record[1]/*:leader/substring(., 7, 1)) = "a"
+    )
+    ,
+    unit:assert(
+     $records//*:leader/substring(., 18, 1) = (" ", "1", "I", "L")
+    )
+    ,
+    unit:assert(
+      $records//*:record[not(*:controlfield[@tag = "006"]) 
+        and not(*:controlfield[@tag = "007"])]
+    )
+    ,
+    unit:assert(
+      $records//*:record[
+        if (*:controlfield[@tag = "008"]/substring(., 34, 1) ne "0") 
+        then true()
+        else *:datafield[starts-with(@tag, "6")][@ind2 eq "0"]
+      ]
+    )
+    ,
+    unit:assert(
+      $records//*:record[
+        contains(lower-case(*:datafield[@tag = "040"]), "dlc") 
+          or *:subfield[@code = "e"] = "rda"          
+          or contains(*:datafield[@tag = "042"], "pcc")          
+        ]                                                
+    )
+    ,
+    unit:assert(
+      $records//*:record[
+        *:datafield[@tag = ("050", "090")]             
+          => string-join() 
+          => string-length() ge 7
+      ]                                                
+    )
+    ,
+    unit:assert(
+      $records//*:record[
+        *:datafield[@tag = ("050", "090")]             
+          => string-join() 
+          => string-length() ge 7
+      ]                                                
+    )
+  )
+    
+};
+
+(:~ 
+ : mqy:check-titles
+ : Sanity check for titles
+ :)
+declare 
+  %unit:test
+function test:check-titles() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data),
+      $records  := db:open("records")/*
+  return (
+    unit:assert(
+      strings:levenshtein(
+        "The Sochi project :"
+        , 
+        $data//record[1]/Title/string(.)
+      ) ge 0.8      
+    ),
+    unit:assert(
+     mqy:check-title(
+       $data//record[1]/Title/string(.),
+       $records//*:record[1]/*:datafield[@tag = "245"]/*:subfield[@code = "a"]
+       /string(.)
+     )      
+    )
+  )
+    
+};
+
+(:~ 
+ : mqy:prune-fields
+ : Remove unwanted data fields
+ :)
+declare
+  %unit:test
+function test:prune-fields() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data),
+      $records  := db:open("records")/*
+  return (
+        
+    unit:assert(
+      mqy:prune-fields(
+        $records//*:record[last()]
+      )
+    )  
+  )
+};
+
+(:~ 
+ : mqy:write-marc21
+ : Convert MARCXML to MARC21
+ :)
+declare
+  %unit:test
+function test:write-marc21() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data),
+      $records  := db:open("records")
+  return (        
+    file:write(
+      "/Users/tt434/Desktop/marcxml/test.xml", 
+      $records//*:record[last()]
+    ),
+    unit:assert-equals(
+      mqy:write-marc21($records//*:record[last()], $options)//code/string(), "0"
+    )          
+  )
+};
+
+(:~ 
+ : mqy:write-marc21
+ : Convert MARCXML to MARC21
+ :)
+declare
+  %unit:test
+function test:write-all-marc21() {
+  let $options  := db:open("options")/mqy:options,
+      $sru      := mqy:options-to-url($options),
+      $mappings := db:open("mappings")/mqy:mappings,
+      $data     := db:open("data")/*,
+      $mapped   := mqy:map-query($mappings, $data),
+      $records  := db:open("records")
+  return (           
+    mqy:write-all-marc21($records, $options),
+    unit:assert(
+      file:list("/Users/tt434/Desktop/marcxml/") => count() gt 2,
+      file:list("/Users/tt434/Desktop/marc21/") => count() gt 2
+    )          
+  )
+};
+
+
 
 (:~ 
  : Remove test fixtures for the current test module
@@ -284,5 +484,10 @@ function test:clear-connect-params() {
   db:drop("connect"),
   db:drop("options"),
   db:drop("mappings"),
-  db:drop("data")
+  db:drop("data"),
+  db:drop("records"),
+  db:drop("marc21"),
+  file:delete("/Users/tt434/Desktop/marcxml/", true()),
+  file:delete("/Users/tt434/Desktop/marc21/", true())
+  
 };

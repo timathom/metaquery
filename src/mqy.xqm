@@ -91,13 +91,13 @@ declare function mqy:clean-isbn(
   replace($isbn, "[^\d|X|x]", "")  
 };
 
-declare function mqy:map-query(
-  $mappings as element(mqy:mappings),
-  $data as item()
+declare function mqy:map-query(  
+  $data as item()*,
+  $mappings as item()
 ) as element(mqy:mapped) {
   <mqy:mapped>
   {      
-    for $r in $data/record
+    for $r in $data//record
     return
       copy $m := $mappings
       modify 
@@ -116,8 +116,8 @@ declare function mqy:map-query(
 };
 
 declare function mqy:build-query(
-  $mapped as element(mqy:mapped)
-) as element(mqy:queries) {
+  $mapped as item()
+) as item() {
   <mqy:queries>
   {
     for $m at $p in $mapped/mqy:mappings
@@ -161,51 +161,94 @@ declare function mqy:build-query(
 };
 
 declare function mqy:compile-query-string(
-  $sru as element(mqy:sru),  
+  $sru as item(),  
   $query as element(mqy:string)
 ) as xs:string {
   ($sru/mqy:head || "(" || $query || ")" || $sru/mqy:tail)
 };
 
 declare function mqy:run-queries(  
-  $sru as element(mqy:sru),
-  $queries as element(mqy:queries)
+  $queries as item(),
+  $sru as item()  
 ) as item()* {    
   <mqy:responses>
   {
     for $query in $queries/mqy:query
     let $isbn :=
       if ($query/mqy:string[@index eq "local.isbn"])
-      then mqy:send-query(mqy:compile-query-string($sru, $query/mqy:string))
+      then 
+        mqy:send-query(
+          mqy:compile-query-string(
+            $sru, 
+            $query/mqy:string[@index eq "local.isbn"]
+          )
+        ) 
       else ()
     return (
-      let $query := $query
-      return
-      if (not($isbn//*:record))
-      then 
-        <mqy:response>
-        {
-          mqy:send-query(      
-            mqy:compile-query-string(
-              $sru, 
-              <mqy:string>{
-                string-join(
-                  for $s in $query/mqy:string[not(@index eq "local.isbn")] 
-                  return $s
-                )        
-              }</mqy:string>
-            )
-          )        
-        }
-        </mqy:response> 
-      else
-        <mqy-sql:message>No results for the query: 
-        {
-          string($query/mqy:string[not(@index eq "local.isbn")])
-        }
-        </mqy-sql:message>
+      <mqy:response title="{$query/mqy:string[@index eq 'dc.title']}">
+      { 
+        if ($isbn//*:record)
+        then $isbn
+        else
+          let $all :=
+            mqy:send-query(
+              mqy:compile-query-string(
+                $sru, 
+                <mqy:string>{
+                  string-join(
+                    for $s in $query/mqy:string[not(@index eq "local.isbn")] 
+                    return $s
+                  )        
+                }</mqy:string>
+              )   
+            ) 
+          return
+            if ($all//*:record)
+            then $all
+            else
+              let $title-pub :=
+                if ($query/mqy:string[@index eq "dc.publisher"])
+                then
+                  mqy:send-query(
+                    ($sru/mqy:head                      
+                    || string-join(
+                          (
+                            "dc.title=" 
+                            || $query/mqy:string[@index eq "dc.title"]
+                               => substring-after("="),
+                            "dc.publisher=" 
+                            || $query/mqy:string[@index eq "dc.publisher"]
+                               => substring-after("=")
+                          )
+                       )
+                    || $sru/mqy:tail)                        
+                  )
+                else ()
+              return                  
+                if ($title-pub//*:record)
+                then $title-pub
+                else
+                  let $title :=                                          
+                    mqy:send-query(
+                      ($sru/mqy:head                      
+                      || "dc.title=" 
+                      || $query/mqy:string[@index eq "dc.title"]
+                           => substring-after("=")
+                      || $sru/mqy:tail)  
+                    )                  
+                  return
+                    if ($title)
+                    then $title
+                    else
+                      <mqy:message>No results for the query: 
+                      {
+                        string($query/mqy:string[not(@index eq "local.isbn")])
+                      }
+                      </mqy:message>
+      }
+      </mqy:response> => trace()
     ) 
-  }</mqy:responses>
+  }</mqy:responses> 
 };
 
 
@@ -235,3 +278,145 @@ declare function mqy:send-query(
     </mqy:error>
   }
 };
+
+(:~ 
+ : Filter results
+ :)
+declare function mqy:filter-results(
+  $responses as element(mqy:responses)
+) as item()* {
+  <mqy:filtered>
+  {
+  for $marc in $responses//*:record
+  let $local := $marc/ancestor::mqy:response/@title/string()
+  return
+    if (
+      $marc
+      [
+        *:leader/substring(., 7, 1) = "a"
+          and *:leader/substring(., 18, 1) = (" ", "1", "I", "L")
+          and not(*:controlfield[@tag = "006"]) 
+          and not(*:controlfield[@tag = "007"])        
+      ]
+      [
+        if (*:controlfield[@tag = "008"]/substring(., 34, 1) ne "0") 
+        then true()
+        else *:datafield[starts-with(@tag, "6")][@ind2 eq "0"]
+      ]
+      [
+        contains(lower-case(*:datafield[@tag = "040"]), "dlc") 
+          or *:subfield[@code = "e"] = "rda"          
+          or contains(*:datafield[@tag = "042"], "pcc")          
+      ]                                                
+      [
+        *:datafield[@tag = ("050", "090")] 
+        => string-join() 
+        => string-length() ge 7
+      ]
+      [
+        mqy:check-title(
+          *:datafield[@tag = "245"]/*:subfield[@code = "a"],
+          $local
+        )
+      ]
+      
+    )
+    then 
+      <mqy:best>
+      {
+        mqy:prune-fields(
+          $marc
+        ) => trace()
+      }
+      </mqy:best>
+    else
+      
+      <mqy:other>
+      {
+        file:write(
+          "/Users/tt434/Desktop/marcxml/other/" 
+          || $marc/*:datafield[@tag = "010"]/*:subfield/string() 
+          || ".xml",
+          $marc => trace()
+        )
+      }
+      </mqy:other>  
+    }
+    </mqy:filtered>
+};
+
+(:~ 
+ : Check titles
+ :)
+declare function mqy:check-title(
+  $local-title as xs:string,
+  $found-title as xs:string
+) as xs:boolean {    
+   strings:levenshtein(
+     $found-title,
+     $local-title           
+   ) ge 0.8     
+};
+
+(:~ 
+ : Prune fields
+ :)
+declare function mqy:prune-fields(
+  $record as element()
+) as xs:boolean {    
+   copy $r := $record
+   modify (
+     delete node $r/*[starts-with(@tag, "9")],
+     delete node $r/*[@tag eq "029"]
+   )
+   return (
+     if ($r[not(*[starts-with(@tag, "9")]) and not(*[@tag eq "029"])])
+     then true()
+     else false()     
+   )
+};
+
+(:~ 
+ : Write MARC21
+ :)
+declare function mqy:write-marc21(
+  $record as item(),
+  $options as element(mqy:options)
+) {
+  
+  let $file  := $record/*:datafield[@tag = "010"]/*:subfield/string(),
+      $store :=
+        proc:execute(
+          "mono",
+          ($options/mqy:MarcEdit/string(),
+          "-s",
+          $options/mqy:marcxml || $file || ".xml",
+          "-d",
+          $options/mqy:marc21 || $file || "-" || random:uuid() || ".dat",
+          "-xmlmarc",
+          "-marc8")   
+        )
+  return (
+    $store
+  )
+    
+};
+
+(:~ 
+ : Write all MARC21 files to folder
+ :)
+declare function mqy:write-all-marc21(
+  $records as item(),
+  $options as element(mqy:options)
+) {
+  for $record in $records//mqy:best//*:record
+  let $file := $record/*:datafield[@tag = "010"]/*:subfield/string()
+  return (
+    file:write(
+      $options/mqy:marcxml || $file || "-" || random:uuid() ||  ".xml", $record
+    ),
+    mqy:write-marc21($record, $options)
+  )
+    
+};
+
