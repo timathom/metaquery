@@ -24,6 +24,7 @@ declare namespace math = "http://www.w3.org/2005/xpath-functions/math";
 declare namespace sql = "http://basex.org/modules/sql";
 declare namespace err = "http://www.w3.org/2005/xqt-errors";
 declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
+declare namespace marc = "http://www.loc.gov/MARC21/slim";
 
 (:~ 
  : 
@@ -120,19 +121,22 @@ declare function mqy:build-query(
 ) as item() {
   <mqy:queries>
   {
-    for $m at $p in $mapped/mqy:mappings
+    for $m at $p in $mapped//mqy:mappings
     return
       <mqy:query>
       {
         for $s in $m/mqy:mapping
         return
-          <mqy:string index="{$s/mqy:index}">
+          <mqy:string index="{$s/mqy:index}" >
           {
+            if ($s/mqy:index eq "dc.title")
+            then attribute { "title" } { $s/mqy:data/Title }
+            else (),
             let $i := $s/mqy:index,
                 $b := $i/@bool,
                 $d := $s/mqy:data
             return 
-            (           
+            (                         
               if ($b eq "AND")
               then 
                 (") " || $b || " (" )
@@ -185,9 +189,9 @@ declare function mqy:run-queries(
         ) 
       else ()
     return (
-      <mqy:response title="{$query/mqy:string[@index eq 'dc.title']}">
+      <mqy:response title="{$query/mqy:string/@title}">
       { 
-        if ($isbn//*:record)
+        if ($isbn//marc:record)
         then $isbn
         else
           let $all :=
@@ -203,7 +207,7 @@ declare function mqy:run-queries(
               )   
             ) 
           return
-            if ($all//*:record)
+            if ($all//marc:record)
             then $all
             else
               let $title-pub :=
@@ -225,7 +229,7 @@ declare function mqy:run-queries(
                   )
                 else ()
               return                  
-                if ($title-pub//*:record)
+                if ($title-pub//marc:record)
                 then $title-pub
                 else
                   let $title :=                                          
@@ -287,7 +291,7 @@ declare function mqy:filter-results(
 ) as item()* {
   <mqy:filtered>
   {
-  for $marc in $responses//*:record
+  for $marc in $responses//marc:record
   let $local := $marc/ancestor::mqy:response/@title/string()
   return
     if (
@@ -314,10 +318,18 @@ declare function mqy:filter-results(
         => string-length() ge 7
       ]
       [
-        mqy:check-title(
-          *:datafield[@tag = "245"]/*:subfield[@code = "a"],
-          $local
-        )
+        let $check :=
+          mqy:check-title(
+            *:datafield[@tag = "245"]/*:subfield[@code = "a"],
+            $local
+          )
+        return
+          if (not($check/mqy:error))
+          then true()
+          else false()
+      ]
+      [
+        contains(string(lower-case(.)), "photo")
       ]
       
     )
@@ -335,7 +347,8 @@ declare function mqy:filter-results(
       {
         file:write(
           "/Users/tt434/Desktop/marcxml/other/" 
-          || $marc/*:datafield[@tag = "010"]/*:subfield/string() 
+          || "marc"           
+          || random:uuid()
           || ".xml",
           $marc => trace()
         )
@@ -349,13 +362,28 @@ declare function mqy:filter-results(
  : Check titles
  :)
 declare function mqy:check-title(
-  $local-title as xs:string,
-  $found-title as xs:string
-) as xs:boolean {    
-   strings:levenshtein(
-     $found-title,
-     $local-title           
-   ) ge 0.8     
+  $local-title as xs:string*,
+  $found-title as xs:string*
+) as item() { 
+  try 
+  {
+    strings:levenshtein(
+      $found-title,
+      $local-title           
+    ) ge 0.8     
+  }
+  catch *
+  {
+    <mqy:error>
+    {
+      "Error [" 
+      || $err:code 
+      || "]: " 
+      || $err:description
+    }
+    </mqy:error>
+  }   
+   
 };
 
 (:~ 
@@ -384,15 +412,16 @@ declare function mqy:write-marc21(
   $options as element(mqy:options)
 ) {
   
-  let $file  := $record/*:datafield[@tag = "010"]/*:subfield/string(),
+  let $file  := $record/*:datafield[@tag = "010"]/*:subfield
+                => normalize-space(),
       $store :=
         proc:execute(
           "mono",
           ($options/mqy:MarcEdit/string(),
           "-s",
-          $options/mqy:marcxml || $file || ".xml",
+          $options/mqy:marcxml || $file || "marc-" || random:uuid() || ".xml",
           "-d",
-          $options/mqy:marc21 || $file || "-" || random:uuid() || ".dat",
+          $options/mqy:marc21 || $file || "marc-" || random:uuid() || ".dat",
           "-xmlmarc",
           "-marc8")   
         )
@@ -409,11 +438,12 @@ declare function mqy:write-all-marc21(
   $records as item(),
   $options as element(mqy:options)
 ) {
-  for $record in $records//mqy:best//*:record
-  let $file := $record/*:datafield[@tag = "010"]/*:subfield/string()
+  for $record in $records//mqy:best//marc:record
+  let $file := $record/*:datafield[@tag = "010"]/*:subfield
+               => normalize-space()
   return (
     file:write(
-      $options/mqy:marcxml || $file || "-" || random:uuid() ||  ".xml", $record
+      $options/mqy:marcxml || $file || "marc-" || random:uuid() ||  ".xml", $record
     ),
     mqy:write-marc21($record, $options)
   )
