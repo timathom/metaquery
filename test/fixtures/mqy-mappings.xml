@@ -28,8 +28,8 @@
   </mapping>
   <mapping>    
     <data>
-      <Publisher xmlns=""/>  
+      <!-- <Publisher xmlns=""/> -->
     </data>        
-    <index bool="OR">dc.publisher</index>
+    <!-- <index bool="OR">dc.publisher</index> -->
   </mapping>  
 </mappings>

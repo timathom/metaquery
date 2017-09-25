@@ -4,11 +4,12 @@ module namespace test = "https://metadatafram.es/test/";
 declare namespace math = "http://www.w3.org/2005/xpath-functions/math";
 declare namespace sql = "http://basex.org/modules/sql";
 declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
+declare namespace marc = "http://www.loc.gov/MARC21/slim";
 
 import module namespace mqy = "https://metadatafram.es/metaquery/mqy/" 
-  at "../src/mqy.xqm";
+  at "../src/modules/mqy.xqm";
 import module namespace mqy-sql = "https://metadatafram.es/metaquery/sql/" at 
-  "../src/mqy-sql.xqm";
+  "../src/modules/mqy-sql.xqm";
 import module namespace test-queries = "https://metadatafram.es/test/queries/" 
   at "fixtures/queries.xqm";
   
@@ -47,6 +48,7 @@ function test:get-connect-params() {
   db:create("records", doc("fixtures/mqy-records.xml"), "records"),
   db:create("marc21"),
   file:create-dir("/Users/tt434/Desktop/marcxml/"),
+  file:create-dir("/Users/tt434/Desktop/marcxml/other/"),
   file:create-dir("/Users/tt434/Desktop/marc21/")
 };
 
@@ -148,16 +150,16 @@ function test:simple-query-with-error() {
 declare
   %unit:test
 function test:convert-options-to-url() {  
-  let $options := db:open("options")/mqy:options,
+  let $options := db:open("options")/*,
       $sru     := mqy:options-to-url($options)
   return (
     unit:assert-equals(
-      $sru/mqy:head/string(),
+      $sru//mqy:head/string(),
       "https://metadatafram.es/metaproxy/oclcbib?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
     ),
     unit:assert-equals(
-      $sru/mqy:tail/string(),
+      $sru//mqy:tail/string(),
       "&amp;startRecord=1&amp;maximumRecords=25&amp;recordSchema=marcxml"
     )
   )  
@@ -196,10 +198,10 @@ function test:map-query() {
       $data     := db:open("data")/*
   return (
     unit:assert(
-      mqy:map-query($mappings, $data)/*/mqy:mapping/mqy:data[LastName ne ""]
+      mqy:map-query($data, $mappings)/*/mqy:mapping/mqy:data[LastName ne ""]
     ),
     unit:assert(
-      not(mqy:map-query($mappings, $data)[2]/*/mqy:mapping/mqy:data[Publisher])  
+      not(mqy:map-query($data, $mappings)[2]/*/mqy:mapping/mqy:data[Publisher])  
     )
   )
 };
@@ -213,7 +215,7 @@ declare
 function test:build-query() {  
   let $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data)[1]
+      $mapped   := mqy:map-query($data, $mappings)[1]
   return (
     unit:assert(
       mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
@@ -237,7 +239,7 @@ function test:compile-query-string() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data)[1]
+      $mapped   := mqy:map-query($data, $mappings)[1]
   return
   (
     unit:assert-equals
@@ -266,13 +268,13 @@ function test:run-queries() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data)
+      $mapped   := mqy:map-query($data, $mappings)
   return    
     unit:assert-equals(
       count(
         mqy:run-queries(
-          $sru,
-          mqy:build-query($mapped)
+          mqy:build-query($mapped),
+          $sru          
         )//mqy:response 
       ), 2 
     )
@@ -289,19 +291,19 @@ function test:run-progressive-queries() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data)
+      $mapped   := mqy:map-query($data, $mappings)
   return (
     unit:assert-equals(
       mqy:run-queries(
-        $sru,
-          mqy:build-query($mapped)
-        )//mqy:response[1]//*:query/string(), "(local.isbn=9781597112444)"        
+        mqy:build-query($mapped),
+        $sru          
+        )//mqy:response[1]//*:query/string(), "(local.isbn=9781597112444)"
       ),
     unit:assert(
-      mqy:run-queries(
-        $sru,
-          mqy:build-query($mapped)
-        )//mqy:response[2]//*:numberOfRecords ! . = 0
+      mqy:run-queries(        
+        mqy:build-query($mapped),
+        $sru
+      )//mqy:response[2]//*:numberOfRecords ! . = 0
       )
     )  
 };
@@ -317,30 +319,30 @@ function test:filter-results() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data),
+      $mapped   := mqy:map-query($data, $mappings),
       $records  := db:open("records")/*
   return (
     unit:assert(
       (mqy:run-queries(
-        $sru,
-        mqy:build-query($mapped)
-      )//mqy:response[1]//*:record[1]/*:leader/substring(., 7, 1)) = "a"
+        mqy:build-query($mapped),
+        $sru        
+      )//mqy:response[1]//marc:record[1]/marc:leader/substring(., 7, 1)) = "a"
     )
     ,
     unit:assert(
-     $records//*:leader/substring(., 18, 1) = (" ", "1", "I", "L")
+     $records//marc:leader/substring(., 18, 1) = (" ", "1", "I", "L")
     )
     ,
     unit:assert(
-      $records//*:record[not(*:controlfield[@tag = "006"]) 
-        and not(*:controlfield[@tag = "007"])]
+      $records//marc:record[not(marc:controlfield[@tag = "006"]) 
+        and not(marc:controlfield[@tag = "007"])]
     )
     ,
     unit:assert(
-      $records//*:record[
-        if (*:controlfield[@tag = "008"]/substring(., 34, 1) ne "0") 
+      $records//marc:record[
+        if (marc:controlfield[@tag = "008"]/substring(., 34, 1) ne "0") 
         then true()
-        else *:datafield[starts-with(@tag, "6")][@ind2 eq "0"]
+        else marc:datafield[starts-with(@tag, "6")][@ind2 eq "0"]
       ]
     )
     ,
@@ -353,16 +355,16 @@ function test:filter-results() {
     )
     ,
     unit:assert(
-      $records//*:record[
-        *:datafield[@tag = ("050", "090")]             
+      $records//marc:record[
+        marc:datafield[@tag = ("050", "090")]             
           => string-join() 
           => string-length() ge 7
       ]                                                
     )
     ,
     unit:assert(
-      $records//*:record[
-        *:datafield[@tag = ("050", "090")]             
+      $records//marc:record[
+        marc:datafield[@tag = ("050", "090")]             
           => string-join() 
           => string-length() ge 7
       ]                                                
@@ -437,7 +439,7 @@ function test:write-marc21() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data),
+      $mapped   := mqy:map-query($data, $mappings),
       $records  := db:open("records")
   return (        
     file:write(
@@ -461,18 +463,39 @@ function test:write-all-marc21() {
       $sru      := mqy:options-to-url($options),
       $mappings := db:open("mappings")/mqy:mappings,
       $data     := db:open("data")/*,
-      $mapped   := mqy:map-query($mappings, $data),
+      $mapped   := mqy:map-query($data, $mappings),
       $records  := db:open("records")
   return (           
     mqy:write-all-marc21($records, $options),
     unit:assert(
-      file:list("/Users/tt434/Desktop/marcxml/") => count() gt 2,
-      file:list("/Users/tt434/Desktop/marc21/") => count() gt 2
+      file:list("/Users/tt434/Desktop/marcxml/") => count() gt 0,
+      file:list("/Users/tt434/Desktop/marc21/") => count() gt 0
     )          
   )
 };
 
-
+(:~ 
+ : Test windowing for parallel processing
+ :)
+declare
+  %unit:test
+function test:windowing() {
+  let $options  := db:open("options")/mqy:options,
+      $mappings := db:open("mappings")/mqy:mappings,
+      $sru      := mqy:options-to-url($options),
+      $records  :=
+        for $csv in 1 to 3
+        return db:open("csv" || $csv)/*,
+      $db-mappings := mqy:map-query($records, $mappings)
+  return
+    unit:assert(
+      (for tumbling window $w in $db-mappings/*
+       start $first at $s when true()
+       end at $e when $e - $s = 5
+       return <mqy:test>{$w}</mqy:test>) ! count(*) = 6 
+    )
+    
+};
 
 (:~ 
  : Remove test fixtures for the current test module
