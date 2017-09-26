@@ -7,7 +7,7 @@ declare namespace mqy-errs = "https://metadatafram.es/metaquery/mqy-errors/";
 declare namespace marc = "http://www.loc.gov/MARC21/slim";
 
 import module namespace mqy = "https://metadatafram.es/metaquery/mqy/" 
-  at "../src/modules/mqy.xqm";
+  at "../src/modules/mqy2.xqm";
 import module namespace mqy-sql = "https://metadatafram.es/metaquery/sql/" at 
   "../src/modules/mqy-sql.xqm";
 import module namespace test-queries = "https://metadatafram.es/test/queries/" 
@@ -160,7 +160,7 @@ function test:convert-options-to-url() {
     ),
     unit:assert-equals(
       $sru//mqy:tail/string(),
-      "&amp;startRecord=1&amp;maximumRecords=25&amp;recordSchema=marcxml"
+      "&amp;startRecord=1&amp;maximumRecords=5&amp;recordSchema=marcxml"
     )
   )  
 };
@@ -219,11 +219,11 @@ function test:build-query() {
   return (
     unit:assert(
       mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
-        = "local.isbn=9781597112444"
+        = "9781597112444"
     ),
     unit:assert(
-      mqy:build-query($mapped)/mqy:query[1]/mqy:string[3]
-        = " OR bath.any=&quot;van%20bruggen&quot;"
+      mqy:build-query($mapped)/mqy:query[1]/mqy:string[3] 
+        = "&quot;van%20bruggen&quot;"
     )
   )
 };
@@ -246,13 +246,15 @@ function test:compile-query-string() {
     (
       mqy:compile-query-string(
         $sru, 
-        mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]
+        mqy:build-query($mapped)/mqy:query[1]/mqy:string[1]/@index[. eq "local.isbn"]
+        || "="
+        || mqy:build-query($mapped)/mqy:query[1]/mqy:string[@index eq "local.isbn"]                   
       ),            
       "https://metadatafram.es/metaproxy/oclcbib?version=1.1&amp;operation=" 
       || "searchRetrieve&amp;query="
-      || "(local.isbn=9781597112444)"
+      || "local.isbn=9781597112444"
       || "&amp;startRecord=1&amp;maximumRecords="
-      || "25&amp;recordSchema=marcxml"
+      || "5&amp;recordSchema=marcxml"
     )
   )
 };
@@ -297,7 +299,7 @@ function test:run-progressive-queries() {
       mqy:run-queries(
         mqy:build-query($mapped),
         $sru          
-        )//mqy:response[1]//*:query/string(), "(local.isbn=9781597112444)"
+        )//mqy:response[1]//*:query/string(), "local.isbn=9781597112444"
       ),
     unit:assert(
       mqy:run-queries(        
