@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records
+  xmlns="https://metadatafram.es/metaquery/mqy/">
+  <record
+    xmlns="http://www.loc.gov/MARC21/slim">
+    <leader>01838cam a2200481Ia 4500</leader>
+    <controlfield
+      tag="001">ocn793921530</controlfield>
+    <controlfield
+      tag="003">OCoLC</controlfield>
+    <controlfield
+      tag="005">20170920154614.0</controlfield>
+    <controlfield
+      tag="008">120518s2010 ch ac 000 0 eng d</controlfield>
+    <datafield tag="010" ind1=" " ind2=" ">
+      <subfield code="a">  2015236966</subfield>
+    </datafield>
+    <datafield
+      ind1=" "
+      ind2=" "
+      tag="040">
+      <subfield
+        code="a">DLC</subfield>
+      <subfield
+        code="b">eng</subfield>
+      <subfield
+        code="c">NYPIC</subfield>
+      <subfield
+        code="d">OCLCA</subfield>
+      <subfield
+        code="d">OCLCF</subfield>
+      <subfield
+        code="d">OCLCQ</subfield>
+    </datafield>
+    <datafield tag="245" ind1="0" ind2="0">
+    <subfield code="a">The Sochi Project :</subfield>
+    <subfield code="b">revista de pensamiento y cultura de la BUAP.</subfield>
+  </datafield>
+  </record>
+  <record
+    xmlns="http://www.loc.gov/MARC21/slim">
+    <leader>01838cam a2200481Ia 4500</leader>
+    <controlfield
+      tag="001">ocn793921530</controlfield>
+    <controlfield
+      tag="003">OCoLC</controlfield>
+    <controlfield
+      tag="005">20170920154614.0</controlfield>
+    <controlfield
+      tag="008">120518s2010 ch ac 000 0 eng d</controlfield>
+    <datafield tag="010" ind1=" " ind2=" ">
+      <subfield code="a">  2015236965</subfield>
+    </datafield>
+    <datafield
+      ind1=" "
+      ind2=" "
+      tag="040">
+      <subfield
+        code="a">DLC</subfield>
+      <subfield
+        code="b">eng</subfield>
+      <subfield
+        code="e">rda</subfield>
+      <subfield
+        code="c">NYPIC</subfield>
+      <subfield
+        code="d">OCLCA</subfield>
+      <subfield
+        code="d">OCLCF</subfield>
+      <subfield
+        code="d">OCLCQ</subfield>
+    </datafield>
+  </record>
+  <record
+    xmlns="http://www.loc.gov/MARC21/slim">
+    <leader>01838cam a2200481Ia 4500</leader>
+    <controlfield
+      tag="001">ocn793921530</controlfield>
+    <controlfield
+      tag="003">OCoLC</controlfield>
+    <controlfield
+      tag="005">20170920154614.0</controlfield>
+    <controlfield
+      tag="008">120518s2010 ch ac 000 0 eng d</controlfield>
+    <datafield tag="010" ind1=" " ind2=" ">
+      <subfield code="a">  2015236963</subfield>
+    </datafield>
+    <datafield
+      ind1=" "
+      ind2=" "
+      tag="040">
+      <subfield
+        code="a">DLC</subfield>
+      <subfield
+        code="b">eng</subfield>
+      <subfield
+        code="e">rda</subfield>
+      <subfield
+        code="c">NYPIC</subfield>
+      <subfield
+        code="d">OCLCA</subfield>
+      <subfield
+        code="d">OCLCF</subfield>
+      <subfield
+        code="d">OCLCQ</subfield>
+    </datafield>
+    <datafield
+      ind1=" "
+      ind2=" "
+      tag="042">
+      <subfield
+        code="a">pcc</subfield>
+    </datafield>
+  </record>
+  <record
+    xmlns="http://www.loc.gov/MARC21/slim">
+    <leader>01838cam a2200481Ia 4500</leader>
+    <controlfield
+      tag="001">ocn793921530</controlfield>
+    <controlfield
+      tag="003">OCoLC</controlfield>
+    <controlfield
+      tag="005">20170920154614.0</controlfield>
+    <controlfield
+      tag="008">120518s2010 ch ac 000 0 eng d</controlfield>
+      <datafield tag="010" ind1=" " ind2=" ">
+      <subfield code="a">  2015236964</subfield>
+    </datafield>
+    <datafield tag="029" ind1=" " ind2=" ">
+     <subfield code="a">Testing</subfield>
+    </datafield>
+    <datafield
+      ind1=" "
+      ind2=" "
+      tag="040">
+      <subfield
+        code="a">DLC</subfield>
+      <subfield
+        code="b">eng</subfield>
+      <subfield
+        code="e">rda</subfield>
+      <subfield
+        code="c">NYPIC</subfield>
+      <subfield
+        code="d">OCLCA</subfield>
+      <subfield
+        code="d">OCLCF</subfield>
+      <subfield
+        code="d">OCLCQ</subfield>
+    </datafield>
+    <datafield
+      ind1=" "
+      ind2=" "
+      tag="042">
+      <subfield
+        code="a">lccopycat</subfield>
+    </datafield>
+    <datafield tag="090" ind1=" " ind2=" ">
+      <subfield code="a">NX7</subfield>
+      <subfield code="b">.U55</subfield>
+    </datafield>
+    <datafield tag="999" ind1=" " ind2=" ">
+     <subfield code="a">Testing</subfield>
+    </datafield>
+  </record>
+</records>
