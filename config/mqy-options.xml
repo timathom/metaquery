@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options xmlns="https://metadatafram.es/metaquery/mqy/">
   <base>https://metadatafram.es/metaproxy/</base>
-  <db>yul</db>
+  <db>oclcbib</db>
   <op>searchRetrieve</op>  
   <start>1</start>
   <max>5</max>
-  <schema>opac</schema>
-  <MarcEdit>/Applications/marcedit/cmarcedit.exe</MarcEdit>
-  <marcxml>/Users/tt434/Desktop/marcxml/</marcxml>
-  <marc21>/Users/tt434/Desktop/marc21/</marc21>
+  <schema>marcxml</schema>
+  <MarcEdit>/home/tat2/apps/marcedit/cmarcedit.exe</MarcEdit>
+  <marcxml>/home/tat2/Desktop/oclc/marcxml/</marcxml>
+  <marc21>/home/tat2/Desktop/oclc/marc21/</marc21>
 </options>

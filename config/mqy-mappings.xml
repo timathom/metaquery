@@ -16,7 +16,7 @@
   <mapping>
     <data>
       <LastName2 xmlns=""/>
-      <!-- <FirstName2 xmlns=""/> -->
+      <FirstName2 xmlns=""/>
     </data>
     <index bool="OR">bath.any</index>
   </mapping>
@@ -25,19 +25,17 @@
       <Title xmlns=""/>
     </data>            
     <index bool="AND">dc.title</index>
+  </mapping>    
+  <mapping>    
+    <data>
+      <!-- <Publisher xmlns=""/> -->
+    </data>        
+    <index bool="OR">dc.publisher</index>
   </mapping>
   <mapping>
     <data>
       <Year xmlns=""/>
     </data>
     <index bool="AND">dc.date</index>
-  </mapping>
-  <!-- 
-  <mapping>    
-    <data>
-      <Publisher xmlns=""/>
-    </data>        
-    <index bool="OR">dc.publisher</index>
   </mapping>  
-  -->
 </mappings>
